@@ -24,7 +24,8 @@ const UsersSchema = mongoose.Schema({
   },
   type: {
     type: String,
-    default: 'common'
+    required: true,
+    trim: true,
   },
   creationDate: {
     type: Date,
