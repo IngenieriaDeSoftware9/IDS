@@ -5,6 +5,8 @@ require('dotenv').config( { path: 'variables.env'} )
 const User = require('./../models/Users')
 const Product = require('./../models/Products')
 const Commentary = require('./../models/Commentarys')
+const Order = require('./../models/Orders')
+const Reservation = require('./../models/Reservations')
 
 const crearToken = (user, wordSecret, expiresIn) => {
   
@@ -52,6 +54,13 @@ const resolvers = {
         console.log(error);
       }
     },
+    searchProduct: async (_, { text }) => {
+      const products = await Product.find({ $text : {
+        $search: text
+      }})
+        .limit(10)
+      return products
+    },
 
     // Comentarios
     getCommentarys: async () => {
@@ -80,7 +89,83 @@ const resolvers = {
       } catch (error) {
         console.log(error);
       }
-    }
+    },
+
+    // Pedidos
+    getOrders: async () => {
+      try {
+        const orders = await Order.find({})
+        return orders
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    getOrderUser: async (_, {  }, ctx) => {
+      try {
+        const orders = await Order.find({ idUser: ctx.user.id })
+        return orders
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    getOrder: async (_, { id }, ctx) => {
+      try {
+        const order = await Order.findById(id)
+        if(!order){
+          throw new Error('Order not found')
+        }
+
+        if(order.idUser.toString() !== ctx.user.id){
+          throw new Error('Action not allowed')
+        }
+
+        return order
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    getOrderStatus: async (_, { state }, ctx) => {
+      try {
+        const orders = await Order.find({ idUser: ctx.user.id, status: state })
+        return orders
+      } catch (error) {
+        console.log(error);
+      }
+    },
+
+    // Reservaciones
+    getReservations: async () => {
+      try {
+        const reservations = await Reservation.find({})
+        return reservations
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    getReservationsUser: async (_, {}, ctx) => {
+      try {
+        const reservations = await Reservation.find({ idUser: ctx.user.id})
+        return reservations
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    getReservation: async (_, { id }, ctx) => {
+      try {
+        const reservation = await Reservation.findById(id)
+        if(!reservation){
+          throw new Error('Order not found')
+        }
+
+        if(reservation.idUser.toString() !== ctx.user.id){
+          throw new Error('Action not allowed')
+        }
+
+        return order
+      } catch (error) {
+        console.log(error);
+      }
+    },
   },
 
   Mutation: {
@@ -267,8 +352,110 @@ const resolvers = {
       } catch (error) {
         console.log(error);
       }
-    }
+    },
 
+    // Pedidos
+    insertOrder: async (_, { input }, ctx) => {
+      try {
+        const newOrder = new Order(input)
+        newOrder.idUser = ctx.user.id
+        const result = await newOrder.save()
+        return result
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    updateOrder: async (_, { id, input }, ctx) => {
+      try {
+
+        // Verificar si el pedido existe
+        const orderExists = await Order.findById(id)
+        if(!orderExists){
+          throw new Error('The order does not exist')
+        }
+        // Mirar si el pedido es del usuario
+        if(orderExists.idUser.toString() !== ctx.user.id) {
+          throw new Error('Action not allowed')
+        }
+
+        // Actualizar
+        const result = await Order.findByIdAndUpdate({_id: id}, input, { new: true })
+        return result
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    deleteOrder: async (_, { id }, ctx) => {
+      try {
+        // Revisar si la orden existe
+        const orderExists = await Order.findById(id)
+        if(!orderExists){
+          throw new Error('Order does not exist')
+        }
+        const user = await User.findById(ctx.user.id)
+
+        if(orderExists.idUser.toString() === ctx.user.id || user.type.toString() === 'Admin'){
+          // Eliminar de la base de datos
+          await Order.findOneAndDelete({_id: id})
+          return "Delete Order"
+        }
+        throw new Error('Action not allowed')
+      } catch (error) {
+        console.log(error);
+      }
+    },
+
+    // Reservaciones
+    insertReservation: async (_, { input }, ctx) => {
+      try {
+        const newReservation = new Reservation(input)
+        newReservation.idUser = ctx.user.id
+        const result = await newReservation.save()
+        return result
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    updateReservation: async (_, { id, input }, ctx) => {
+      try {
+        // Verificar si la reservacion existe 
+        const reservationExists = await Reservation.findById(id)
+        if(!reservationExists){
+          throw new Error('The reservation does not exist')
+        }
+
+        // Mirar si la reservacion es del usuario 
+        if(reservationExists.idUser.toString() !== ctx.user.id) {
+          throw new Error('Action not allowed')
+        }
+
+        // Actualizar reservacion
+        const result = await Reservation.findByIdAndUpdate({_id: id}, input, { new: true })
+        return result
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    deleteReservation: async (_, { id }, ctx) => {
+      try {
+        // Verificar si la reservacion existe 
+        const reservationExists = await Reservation.findById(id)
+        if(!reservationExists){
+          throw new Error('The reservation does not exist')
+        }
+
+        // Borrar reservacion
+        const user = await User.findById(ctx.user.id)
+        if(reservationExists.idUser.toString() === ctx.user.id || user.type.toString() === 'Admin'){
+          // Eliminar de la base de datos
+          await Reservation.findOneAndDelete({_id: id})
+          return "Delete Order"
+        }
+        throw new Error('Action not allowed')
+      } catch (error) {
+        console.log(error);
+      }
+    }
   }
 }
 

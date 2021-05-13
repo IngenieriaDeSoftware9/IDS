@@ -22,7 +22,7 @@ const typeDefs = gql`
     description: String
     price: Float
     ingredients: String
-    type: String
+    type: TypeProduct
     creationDate: String
   }
 
@@ -30,6 +30,29 @@ const typeDefs = gql`
     id: ID
     idUser: ID
     idProduct: ID
+    description: String
+    creationDate: String
+  }
+
+  type GroupOrder{
+    id: ID
+    amount: Int
+  }
+
+  type Order{
+    id: ID
+    order: [GroupOrder]
+    total: Float
+    idUser: ID
+    status: StatusOrder
+    creationDate: String
+  }
+
+  type Reservation{
+    id: ID
+    idUser: ID
+    idOrder: ID
+    dateReservation: String
     description: String
     creationDate: String
   }
@@ -47,13 +70,6 @@ const typeDefs = gql`
     password: String!
   }
 
-  enum TypeProduct{
-    Drinks
-    Desserts
-    Tickets
-    MainCourse
-  }
-
   input ProductInput{
     name: String!
     description: String!
@@ -67,6 +83,36 @@ const typeDefs = gql`
     description: String!
   }
 
+  input OrderProductInput{
+    id: ID!
+    amount: Int
+  }
+
+  input OrderInput{
+    order: [OrderProductInput]
+    total: Float!
+    status: StatusOrder
+  }
+
+  input ReservationInput{
+    idOrer: ID
+    dateReservation: String!
+    description: String
+  }
+
+  enum TypeProduct{
+    Drinks
+    Desserts
+    Tickets
+    MainCourse
+  }
+
+  enum StatusOrder{
+    Earring
+    Completed
+    Cancelled
+  }
+
   type Query{
     # Usuarios
     getUser(token: String!): User
@@ -75,11 +121,23 @@ const typeDefs = gql`
     # Productos
     getProducts: [Product]
     getProduct(id: ID!): Product
+    searchProduct(text: String!): [Product]
 
     # Comentarios
     getCommentarys: [Commentary]
     getCommentarysUser: [Commentary]
     getCommentarysProduct(id: ID!): [Commentary]
+
+    # Pedidos 
+    getOrders: [Order]
+    getOrderUser: [Order]
+    getOrder(id: ID!): Order
+    getOrderStatus(state: String!): [Order]
+
+    # Reservaciones
+    getReservations: [Reservation]
+    getReservationsUser: [Reservation]
+    getReservation(id: ID!): Reservation
   }
 
   type Mutation{
@@ -98,6 +156,16 @@ const typeDefs = gql`
     insertCommentary(input: CommentaryInput!): Commentary
     updateCommentary(id: ID!, input: CommentaryInput!): Commentary
     deleteCommentary(id: ID!): String
+
+    # Pedidos
+    insertOrder(input: OrderInput!): Order
+    updateOrder(id: ID!, input: OrderInput!): Order
+    deleteOrder(id: ID!): String
+
+    # Reservaciones
+    insertReservation(input: ReservationInput!): Reservation
+    updateReservation(id: ID!, input: ReservationInput!): Reservation
+    deleteReservation(id: ID!): String
   }
 
 `
