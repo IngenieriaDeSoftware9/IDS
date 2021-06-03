@@ -9,7 +9,7 @@ const Order = require('./../models/Orders')
 const Reservation = require('./../models/Reservations')
 
 const crearToken = (user, wordSecret, expiresIn) => {
-  
+
   const { id, email, name, lastName } = user
 
   return jwt.sign({ id, email, name, lastName}, wordSecret, { expiresIn })
@@ -19,10 +19,9 @@ const crearToken = (user, wordSecret, expiresIn) => {
 const resolvers = {
   Query: {
     // Usuarios
-    getUser: async (_, { token }) => {
-      const UserId = await jwt.verify(token, process.env.SECRETA)
-
-      return UserId
+    getUser: async (_, {}, ctx) => {
+      const user = await User.findById(ctx.user.id)
+      return user
     },
     getUsers: async () => {
       try {
@@ -40,11 +39,11 @@ const resolvers = {
         return products
       } catch (error) {
         console.log(error)
-      } 
+      }
     },
     getProduct: async (_, { id }) => {
       try {
-        // Revisar si el producto existe 
+        // Revisar si el producto existe
         const product = await Product.findById(id)
         if(!product){
           throw new Error('Product not found')
@@ -88,6 +87,14 @@ const resolvers = {
         return commentarys
       } catch (error) {
         console.log(error);
+      }
+    },
+    getCommentary: async (_, { id } ) => {
+      try {
+        const commentary = await Commentary.findById(id)
+        return commentary
+      } catch (e) {
+        console.log(e);
       }
     },
 
@@ -280,12 +287,12 @@ const resolvers = {
     },
     updateProduct: async (_, {id, input}) => {
       try {
-        // Revisar si el producto existe 
+        // Revisar si el producto existe
         let product = await Product.findById(id)
         if(!product){
           throw new Error('Product not found')
         }
-        
+
         // Guardar en la base de datos
         product = await Product.findOneAndUpdate({ _id : id }, input, { new: true })
         return product
@@ -295,12 +302,12 @@ const resolvers = {
     },
     deleteProduct: async (_, { id }) => {
       try {
-        // Revisar si el producto existe 
+        // Revisar si el producto existe
         const product = await Product.findById(id)
         if(!product){
           throw new Error('Product not found')
         }
-        
+
         // Eliminar
         await Product.findOneAndDelete({_id: id})
         return "Product Delete"
@@ -313,7 +320,7 @@ const resolvers = {
     insertCommentary: async (_, { input }, ctx) => {
       try {
         const newCommentary = new Commentary(input)
-        
+
         // Asignar usuario
         newCommentary.idUser = ctx.user.id
 
@@ -333,7 +340,7 @@ const resolvers = {
           return commentary
         }else{
           throw new Error('It is not possible to update a comment that is not yours')
-        }     
+        }
       } catch (error) {
         console.log(error);
       }
@@ -348,7 +355,7 @@ const resolvers = {
           return "Commentary delete"
         }else{
           throw new Error('It is not possible to delete a comment that is not yours')
-        } 
+        }
       } catch (error) {
         console.log(error);
       }
@@ -418,13 +425,13 @@ const resolvers = {
     },
     updateReservation: async (_, { id, input }, ctx) => {
       try {
-        // Verificar si la reservacion existe 
+        // Verificar si la reservacion existe
         const reservationExists = await Reservation.findById(id)
         if(!reservationExists){
           throw new Error('The reservation does not exist')
         }
 
-        // Mirar si la reservacion es del usuario 
+        // Mirar si la reservacion es del usuario
         if(reservationExists.idUser.toString() !== ctx.user.id) {
           throw new Error('Action not allowed')
         }
@@ -438,7 +445,7 @@ const resolvers = {
     },
     deleteReservation: async (_, { id }, ctx) => {
       try {
-        // Verificar si la reservacion existe 
+        // Verificar si la reservacion existe
         const reservationExists = await Reservation.findById(id)
         if(!reservationExists){
           throw new Error('The reservation does not exist')

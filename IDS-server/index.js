@@ -9,7 +9,7 @@ const connectDb = require('./config/db')
 // Conectar a la base de datos
 connectDb()
 
-// Servidor 
+// Servidor
 const server = new ApolloServer({
   typeDefs,
   resolvers,
@@ -17,7 +17,7 @@ const server = new ApolloServer({
     const token = req.headers['authorization'] || ''
     if(token){
       try {
-        const user = jwt.verify(token, process.env.SECRETA)
+        const user = jwt.verify(token.replace('Bearer ', ''), process.env.SECRETA)
         return {
           user
         }
