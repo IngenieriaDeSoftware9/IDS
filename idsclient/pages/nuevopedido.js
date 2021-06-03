@@ -6,6 +6,7 @@ import { useContext } from 'react'
 import PedidoContext from '../context/pedidos/PedidoContex'
 
 const nuevopedido = () => {
+  
 
   // Utilizar contex y extraer sus valores
   const pedidoContext = useContext(PedidoContext)
